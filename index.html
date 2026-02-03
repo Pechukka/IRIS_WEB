@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IRIS | Strategic Data Intelligence</title>
+    <style>
+        /* --- CORE STYLES --- */
+        :root {
+            --bg-color: #000000;
+            --text-color: #ffffff;
+            --accent-cyan: #00f3ff;
+            --font-main: 'Inter', sans-serif;
+            --font-code: 'Fira Code', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-main);
+            overflow-x: hidden; 
+            overflow-y: auto;
+            cursor: none; 
+            width: 100vw;
+        }
+
+        /* --- UI UTILS --- */
+        .hidden { opacity: 0; pointer-events: none; }
+        #site-wrapper { transition: opacity 0.8s ease-out; }
+
+        /* --- CUSTOM CURSOR --- */
+        .cursor-dot {
+            width: 4px; height: 4px; background-color: white;
+            position: fixed; top: 0; left: 0; transform: translate(-50%, -50%);
+            border-radius: 50%; z-index: 9999; pointer-events: none;
+            box-shadow: 0 0 15px var(--accent-cyan);
+            transition: opacity 0.5s;
+        }
+        .cursor-outline { 
+            width: 40px; height: 40px; 
+            border: 1px solid rgba(255, 255, 255, 0.3); 
+            position: fixed; top: 0; left: 0; transform: translate(-50%, -50%);
+            border-radius: 50%; z-index: 9999; pointer-events: none;
+            transition: width 0.2s, height 0.2s, opacity 0.5s;
+        }
+
+        /* --- HEADER --- */
+        header {
+            position: fixed; top: 0; width: 100%; padding: 2rem 4rem;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 100; mix-blend-mode: exclusion;
+        }
+        .logo-text { font-weight: 700; font-size: 1.2rem; letter-spacing: 0.2em; }
+        .nav-btn { 
+            font-family: var(--font-code); border: 1px solid rgba(255,255,255,0.3); 
+            padding: 8px 20px; text-decoration: none; color: white; font-size: 0.75rem;
+            transition: 0.4s; overflow: hidden; position: relative;
+        }
+        .nav-btn:hover { background: white; color: black; }
+
+        /* --- THE CENTRAL EYE --- */
+        .eye-container-fixed {
+            position: fixed; top: 50%; left: 50%;
+            width: 280px; height: 180px; z-index: 50; pointer-events: none;
+            filter: drop-shadow(0 0 25px rgba(255, 255, 255, 0.1));
+            transform-origin: center center;
+        }
+        svg.iris-eye { width: 100%; height: 100%; overflow: visible; }
+        .sclera { fill: none; stroke: white; stroke-width: 6; stroke-linecap: round; opacity: 0.5; }
+        .pupil-ring { fill: none; stroke: white; stroke-width: 2; opacity: 0.8; }
+        .pupil-core { fill: white; }
+
+        /* --- SECTIONS --- */
+        section {
+            min-height: 100vh; width: 100%; position: relative; z-index: 60;
+            display: flex; align-items: center; pointer-events: none;
+        }
+        .content-left { width: 40%; padding-left: 5vw; pointer-events: auto; }
+        .content-right { width: 40%; margin-left: auto; padding-right: 5vw; text-align: right; pointer-events: auto; }
+
+        .hero-title { font-size: 4vw; line-height: 0.95; margin-bottom: 2rem; mix-blend-mode: difference; font-weight: 700; letter-spacing: -0.02em; }
+        .section-label { font-family: var(--font-code); color: var(--accent-cyan); font-size: 0.8rem; margin-bottom: 20px; display: block; letter-spacing: 0.1em; }
+        .desc { color: #999; font-size: 1.25rem; line-height: 1.5; max-width: 480px; font-weight: 300; }
+        .tech-tag { display: inline-block; border: 1px solid #444; padding: 6px 12px; margin: 5px 5px 5px 0; font-family: var(--font-code); font-size: 0.75rem; color: #ccc; text-transform: uppercase; }
+
+        /* --- FORM SECTION --- */
+        .form-container {
+            width: 100%; max-width: 600px; margin: 0 auto; text-align: center;
+            background: rgba(10, 10, 10, 0.8); padding: 3rem; border: 1px solid #222;
+            backdrop-filter: blur(5px); position: relative; pointer-events: auto;
+        }
+        .form-input {
+            width: 100%; background: transparent; border: none; border-bottom: 1px solid #333;
+            color: white; padding: 15px 0; font-family: var(--font-code); font-size: 1rem;
+            margin-bottom: 2rem; transition: 0.3s;
+        }
+        .form-input:focus { outline: none; border-bottom-color: var(--accent-cyan); }
+        .form-input::placeholder { color: #555; }
+        .submit-btn {
+            background: transparent; border: 1px solid var(--accent-cyan); color: var(--accent-cyan);
+            padding: 15px 50px; font-family: var(--font-code); font-size: 1rem; cursor: pointer;
+            transition: 0.3s; letter-spacing: 0.1em;
+        }
+        .submit-btn:hover { background: var(--accent-cyan); color: black; box-shadow: 0 0 20px var(--accent-cyan); }
+
+        /* --- FINAL MESSAGE (Overlay) --- */
+        #final-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 200; opacity: 0; pointer-events: none;
+            background: transparent; /* Fondo transparente para ver las estrellas */
+        }
+        
+        /* Logo final más pequeño encima del texto */
+        .final-logo { width: 120px; height: 80px; margin-bottom: 2rem; }
+        .final-logo .sclera { stroke: var(--accent-cyan); stroke-width: 4; }
+        .final-logo .pupil-core { fill: white; }
+        
+        .final-text-container { text-align: center; text-transform: uppercase; }
+        .final-line {
+            display: block; font-size: 5vw; font-weight: 800; line-height: 1.1;
+            letter-spacing: 0.05em; color: white;
+            text-shadow: 0 0 30px rgba(0, 243, 255, 0.5);
+            transform: translateY(20px); opacity: 0; /* Para animación */
+        }
+        .final-line.cyan { color: var(--accent-cyan); }
+
+        /* --- 3D BACKGROUND --- */
+        #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+        .reveal { opacity: 0; transform: translateY(30px); }
+        
+        footer {
+            padding: 2rem; text-align: center; font-family: var(--font-code); font-size: 0.7rem; color: #444;
+            position: relative; z-index: 60; background: black; width: 100%;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300&family=Inter:wght@300;400;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <div class="cursor-dot"></div><div class="cursor-outline"></div><div id="canvas-container"></div>
+    
+    <div id="site-wrapper">
+        <header><div class="logo-text">IRIS_OS</div><a href="#contact" class="nav-btn">INITIATE</a></header>
+
+        <div class="eye-container-fixed" id="iris-eye">
+            <svg class="iris-eye" viewBox="0 0 200 120">
+                <g class="eyelids"><path class="sclera upper" d="M 10,60 Q 100,-20 190,60" /><path class="sclera lower" d="M 10,60 Q 100,140 190,60" /></g>
+                <g class="pupil-group" id="pupil"><circle class="pupil-core" cx="100" cy="60" r="10" /><circle class="pupil-ring" cx="100" cy="60" r="20" style="opacity: 0.9" /><circle class="pupil-ring" cx="100" cy="60" r="30" style="opacity: 0.5; stroke-dasharray: 4 2;" /><circle class="pupil-ring" cx="100" cy="60" r="40" style="opacity: 0.3; stroke-dasharray: 1 4;" /></g>
+            </svg>
+        </div>
+
+        <main>
+            <section><div class="content-left reveal"><span class="section-label">SYSTEM ONLINE</span><h1 class="hero-title">INTELLIGENCE<br>BEYOND THE<br>DASHBOARD.</h1><p class="desc">The first Zero-Trust AI Analyst built for the C-Suite. Turn your database into an instant conversation.</p></div></section>
+            <section><div class="content-right reveal"><span class="section-label">01 // VELOCITY</span><h1 class="hero-title">FROM WEEKS<br>TO SECONDS.</h1><p class="desc" style="margin-left: auto;">Stop waiting for analytics. Ask IRIS in plain English and get verified answers in 0.4s.<br><br><span style="color:white; font-size: 1rem;">"What is our ARR growth vs last Q?"</span></p></div></section>
+            <section><div class="content-left reveal"><span class="section-label">02 // SOVEREIGNTY</span><h1 class="hero-title">AIR-TIGHT<br>SECURITY.</h1><p class="desc">We don't train on your data. IRIS reads, calculates, answers, and forgets.<br><br><strong>Zero-Log Architecture. EU Compliant.</strong></p></div></section>
+            <section><div class="content-right reveal"><span class="section-label">03 // AGNOSTIC</span><h1 class="hero-title">PLUG &<br>GOVERN.</h1><p class="desc" style="margin-left: auto;">No migration required. Read-only tunnel to your stack.</p><div style="margin-top: 20px;"><span class="tech-tag">SNOWFLAKE</span><span class="tech-tag">POSTGRESQL</span><span class="tech-tag">SALESFORCE</span></div></div></section>
+
+            <section id="contact" style="flex-direction: column;">
+                <div class="reveal">
+                    <span class="section-label" style="text-align: center;">04 // DEPLOYMENT</span>
+                    <h1 class="hero-title" style="text-align: center; font-size: 3vw;">INITIATE PROTOCOL</h1>
+                    <div class="form-container">
+                        <form id="irisForm" onsubmit="handleFormSubmit(event)">
+                            <input type="text" class="form-input" placeholder="OFFICER NAME" required>
+                            <input type="email" class="form-input" placeholder="COMM CHANNEL (EMAIL)" required>
+                            <input type="text" class="form-input" placeholder="OBJECTIVE / MESSAGE">
+                            <button type="submit" class="submit-btn" id="submitBtn">TRANSMIT REQUEST</button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+            <footer>IRIS DATA SOLUTIONS S.L. © 2026 // SECURE CONNECTION ESTABLISHED</footer>
+        </main>
+    </div>
+
+    <div id="final-screen">
+        <svg class="final-logo" viewBox="0 0 200 120">
+            <path class="sclera upper" d="M 10,60 Q 100,-20 190,60" fill="none" />
+            <path class="sclera lower" d="M 10,60 Q 100,140 190,60" fill="none" />
+            <circle class="pupil-core" cx="100" cy="60" r="18" />
+        </svg>
+        
+        <div class="final-text-container">
+            <span class="final-line">WELCOME</span>
+            <span class="final-line cyan">TO THE FAMILY</span>
+        </div>
+    </div>
+
+    <script>
+        // --- UI & SCROLL ---
+        const cursorDot=document.querySelector('.cursor-dot'),cursorOutline=document.querySelector('.cursor-outline'),pupil=document.getElementById('pupil'),eyelids=document.querySelector('.eyelids'),pupilRings=document.querySelectorAll('.pupil-ring');
+        window.addEventListener('mousemove',(e)=>{cursorDot.style.left=`${e.clientX}px`;cursorDot.style.top=`${e.clientY}px`;cursorOutline.animate({left:`${e.clientX}px`,top:`${e.clientY}px`},{duration:500,fill:"forwards"});const x=(e.clientX-window.innerWidth/2)/(window.innerWidth/2),y=(e.clientY-window.innerHeight/2)/(window.innerHeight/2);gsap.to(pupil,{x:x*30,y:y*15,duration:.3,ease:"power2.out"});});
+        gsap.set("#iris-eye",{xPercent:-50,yPercent:-50}); gsap.to("#iris-eye",{scale:1.03,duration:4,repeat:-1,yoyo:true,ease:"sine.inOut"});
+        function blink(){const tl=gsap.timeline({onComplete:()=>{setTimeout(blink,Math.random()*4000+2000)}});tl.to(eyelids,{scaleY:.1,duration:.1,ease:"power4.inOut",transformOrigin:"center"}).to(eyelids,{scaleY:1,duration:.15,ease:"power4.inOut"});}setTimeout(blink,2000);
+        pupilRings.forEach((ring,i)=>{gsap.to(ring,{attr:{r:parseFloat(ring.getAttribute('r'))+5},opacity:.1,duration:2,repeat:-1,yoyo:true,ease:"power1.inOut",delay:i*.2})});
+        
+        gsap.registerPlugin(ScrollTrigger); 
+        document.querySelectorAll(".reveal").forEach((el)=>{
+            gsap.to(el,{opacity:1,y:0,duration:1,ease:"power3.out",scrollTrigger:{trigger:el,start:"top 85%"}});
+        });
+
+        // --- THREE.JS HIPERESPACIO ---
+        const scene = new THREE.Scene(); scene.fog = new THREE.FogExp2(0x000000, 0.002);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 2000); camera.position.z = 5;
+        const renderer = new THREE.WebGLRenderer({alpha:true, antialias:true}); renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // CONFIGURACIÓN DE LAS LÍNEAS DE ESTRELLAS (WARP LINES)
+        const starCount = 3000;
+        const geo = new THREE.BufferGeometry();
+        const positions = new Float32Array(starCount * 6); // 2 vértices por línea (inicio, fin) * 3 coords
+        const velocities = []; // Velocidad individual
+
+        for(let i=0; i<starCount; i++) {
+            const x = (Math.random() - 0.5) * 400;
+            const y = (Math.random() - 0.5) * 400;
+            const z = (Math.random() - 0.5) * 1000 - 500; // Profundidad
+            
+            // Punto 1 (Cabeza)
+            positions[i*6] = x; positions[i*6+1] = y; positions[i*6+2] = z;
+            // Punto 2 (Cola - Inicialmente igual a cabeza)
+            positions[i*6+3] = x; positions[i*6+4] = y; positions[i*6+5] = z;
+            
+            velocities.push(Math.random());
+        }
+        
+        geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        
+        // Material blanco con algo de transparencia
+        const mat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 });
+        const warpLines = new THREE.LineSegments(geo, mat);
+        scene.add(warpLines);
+
+        // COMETAS FONDO (Solo visibles antes del salto)
+        const cometHead = new THREE.Mesh(new THREE.SphereGeometry(0.15,16,16), new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0})); scene.add(cometHead);
+        const tailGeo = new THREE.BufferGeometry(); 
+        // ... (Configuración básica de cometa, simplificada para ahorrar espacio en este bloque crítico)
+        // Nota: Para este efecto final, nos centraremos en que el Hiperespacio funcione perfecto.
+        
+        // VARIABLES DE ESTADO
+        let warpSpeed = { val: 0.2 }; // Velocidad base lenta
+        let isWarping = false;
+
+        // --- LOOP PRINCIPAL ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Actualizar líneas
+            const pos = warpLines.geometry.attributes.position.array;
+            
+            for(let i=0; i<starCount; i++) {
+                // Índice base
+                const idx = i*6;
+                
+                // Mover cabeza (Z)
+                pos[idx+2] += warpSpeed.val * (1 + velocities[i]); // Mover hacia cámara
+                
+                // Mover cola
+                // Si estamos en WARP, la cola se queda atrás (estiramiento)
+                // Longitud basada en velocidad
+                const streakLength = warpSpeed.val * 8; 
+                pos[idx+5] = pos[idx+2] - streakLength;
+                
+                // Igualar X e Y (no cambian)
+                // Cola X/Y = Cabeza X/Y
+                pos[idx+3] = pos[idx]; 
+                pos[idx+4] = pos[idx+1];
+
+                // Reset si pasa la cámara
+                if(pos[idx+2] > 50) {
+                    const newZ = -1000;
+                    const newX = (Math.random() - 0.5) * 400;
+                    const newY = (Math.random() - 0.5) * 400;
+                    
+                    pos[idx] = newX; pos[idx+1] = newY; pos[idx+2] = newZ;
+                    pos[idx+3] = newX; pos[idx+4] = newY; pos[idx+5] = newZ;
+                }
+            }
+            warpLines.geometry.attributes.position.needsUpdate = true;
+
+            // Animación Cometa (Solo si no estamos saltando)
+            // (Código de cometa omitido para priorizar rendimiento del Warp)
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // --- MANEJO DEL SUBMIT (EL SALTO) ---
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.innerHTML = "JUMP COORDINATES LOCKED";
+            btn.style.background = "white"; btn.style.color = "black";
+            
+            isWarping = true;
+            document.body.style.overflow = "hidden"; // Bloquear scroll
+            
+            // 1. Ocultar Sitio
+            gsap.to("#site-wrapper", { opacity: 0, duration: 1, pointerEvents: "none" });
+            gsap.to(".cursor-dot, .cursor-outline", { opacity: 0, duration: 0.5 });
+
+            // 2. Secuencia Hiperespacio
+            const tl = gsap.timeline();
+
+            // Acelerar (Estirar líneas)
+            tl.to(warpSpeed, { 
+                val: 50, // Velocidad extrema
+                duration: 3, 
+                ease: "expo.in"
+            });
+
+            // Crucero (Mantener líneas largas)
+            tl.to({}, { duration: 2 });
+
+            // Frenar (Volver a puntos/líneas cortas y mostrar mensaje)
+            tl.to(warpSpeed, { 
+                val: 0.2, // Velocidad lenta
+                duration: 2.5, 
+                ease: "power4.out",
+                onComplete: () => {
+                    // Mostrar pantalla final
+                    gsap.to("#final-screen", { opacity: 1, duration: 2 });
+                    gsap.to(".final-line", { y: 0, opacity: 1, stagger: 0.3, duration: 1.5, ease: "power3.out" });
+                }
+            });
+        }
+        
+        window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
+    </script>
+</body>
+</html>
